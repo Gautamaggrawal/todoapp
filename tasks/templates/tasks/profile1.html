@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html >
+<head>
+  <meta charset="UTF-8">
+  <title>TodoApp - Create A Todo With Django</title>
+  {% load static %}
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
+  <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+   <link rel="stylesheet" type="text/css" href="{% static 'style.css' %}">
+</head>
+<body>
+<div django-app="TaskManager">
+
+    <div class="container" >
+            <div class="content">
+            <h1>TodoApp</h1>
+            <p class="tagline"> {{ request.user }}</p>
+            <form id="todocreate" method="POST">
+            {% csrf_token %} 
+            <div class="inputContainer">
+                    <input type="text" id="taskname" class="taskName" placeholder="Name?" name="description" required>
+                    <label for="description">Title</label>
+                </div>
+
+                <div class="inputContainer">
+                    <input type="text" id="description" class="taskName" placeholder="What do you need to do?" name="description" required>
+                    <label for="description">Description</label>
+                </div>
+                <div class="inputContainer half last">
+                    <i class="fa fa-caret-down selectArrow"></i>
+                    <select id="category" class="taskCategory" name="category_select">
+                    <option class="disabled" value="">Choose a category</option>
+                    {% for cate in cat %}
+                        <option class="" value="{{ cate.id }}" name="{{ cate.name }}">{{ cate.name }}</option>
+                    {% endfor %}
+                    </select>
+                    <label for="category">Category</label>
+                </div>
+                <div class="inputContainer half last right">
+                    
+                    <input name="due_date" id="dueDate" type="date" value="YYYY-MM-DD"> 
+                    <label for="dueDate">Due Date</label>
+                </div>
+                <div class="row">
+
+                    <button class="taskAdd" name="taskAdd" type="submit"><i class="fa fa-plus icon"></i>Add task</button>
+                {% csrf_token %} 
+            </form>
+
+
+                    <!-- <button class="taskDelete" name="taskDelete" formnovalidate="" type="submit" onclick="$('input#sublist').click();"><i class="fa fa-trash-o icon"></i>Delete Tasks</button> -->
+                </div>
+                
+<!-- onclick="$('input#sublist').click(); -->
+            
+            <ul class="taskList">
+            {% for todo in todos %} <!-- django template lang - for loop -->
+                <li class="taskItem" id="{{ todo.id }}">
+                    
+                    <!-- <input type="checkbox" class="taskCheckbox" name="{{ todo.id }}" id="{{ todo.id }}" value="{{ todo.id }}"> -->
+                          
+                    <label for="{{ todo.id }}"><span class="complete-">{{ todo.title }}</span></label>
+                    <span class="category-{{ todo.category }}">{{ todo.category }}</span>
+                    <strong class="taskDate"><i class="fa fa-calendar"></i>{{ todo.created }} - {{ todo.due_date }}</strong>
+                    <label>Status:</label>
+                    <span>{% if todo.completed == False %}Pending{% else %}Completed{% endif %}</span>
+                    <button class="taskDelete"  name="{{ todo.id }}" type="submit"><i class="fa fa-trash-o icon"></i></button>
+                
+
+                </li>
+            {% endfor %}
+            </ul><!-- taskList -->
+            
+            </div><!-- content -->
+ </div><!-- container -->
+ <button class="taskAdd" id='viewalltasks'><i class="fa fa-plus icon"></i>View all</button>
+ <span id='ddw' style="color: black;"></span>
+ <span id='ddw1' style="color: black;"></span>
+ <span id='ddw2' style="color: black;"></span>
+ <span id='ddw3' style="color: black;"></span>
+ <span id='ddw4' style="color: black;"></span>
+ <span id='ddw5' style="color: black;"></span>
+
+
+</div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+<script>
+    $(document).on('submit',"#todocreate",function(e){
+      e.preventDefault();
+      console.log(e)
+      csrfmiddlewaretoken = document.getElementsByName("csrfmiddlewaretoken")[0].value;
+      console.log("ajdsbc");
+
+
+
+
+        taskname = document.getElementById("taskname").value;
+        description = document.getElementById("description").value;
+        dueDate = document.getElementById("dueDate").value;
+        var e = document.getElementById("category");
+        category = e.options[e.selectedIndex].value;
+
+        
+        var CurrentDate = new Date();
+        GivenDate = new Date(dueDate);
+
+        if(GivenDate < CurrentDate){
+            alert('due date can not be less than the current date.');
+        }
+        else{
+
+
+
+
+        $.ajax({
+            type:"POST",
+            url:'/createtodo/',
+            data:{
+                'csrfmiddlewaretoken': csrfmiddlewaretoken,
+                'title':taskname,
+                "content":description,
+                "due_date":dueDate,
+                "category":category
+
+            },
+            error: function(e) {
+                console.log(e);
+                console.log(e['password1']);
+                // alert(e['responseText']);
+                x=JSON.parse(e['responseText']);
+              console.log(x);
+              if (x['due_date']){
+                alert("name:"+x['title']);
+              }
+
+                if (x['title']){
+                    alert("date:"+x['due_date']);
+                }
+
+
+            },
+            
+            success : function(data){
+              
+                console.log(data);
+                alert("Created successly");
+                console.log(data['title']);
+                console.log(data['created']);
+                console.log(data['completed']);
+                console.log(data['due_date']);
+                d=data['title']
+                c=data['due_date']
+                cc=data['created']
+                cd=data['category']
+                console.log('bhai aajajajaj',data['id']);
+
+
+                $(".taskList").prepend('<li class="taskItem" id='+data['id']+'>'+d+
+                 '<label><span class="complete-">'+d+'</span></label>'+   
+                 '<span class="category-{{ todo.category }}">'+cd+'</span>'+
+                 '<strong class="taskDate"><i class="fa fa-calendar"></i>'+cc+'-'+c+'</strong>'+
+                  '<label>Status:</label>'+
+                 '<span>'+data['completed']+'</span>'+
+                 '<button class=taskDelete name='+data['id']+' type="submit"><i class="fa fa-trash-o icon"></i></button>'+
+                    '</li>');
+                location.reload();
+
+
+                
+                          
+                //     
+                //     <span class="category-{{ todo.category }}">{{ todo.category }}</span>
+                //     <strong class="taskDate"><i class="fa fa-calendar"></i>{{ todo.created }} - {{ todo.due_date }}</strong>
+                //     
+                //     <span>{% if todo.completed == False %}Pending{% else %}Completed{% endif %}</span>
+                //     <button class="taskDelete"  name="{{ todo.id }}" type="submit"><i class="fa fa-trash-o icon"></i></button>
+                
+
+                // </li>
+// '<li class="taskItem">'+d+
+//                     '<label for="{{ todo.id }}"><span class="complete-">{{ todo.title }}</span></label>'
+//                      '<span class="category-{{ todo.category }}">'+cd+'</span>'+
+//                     '<strong class="taskDate"><i class="fa fa-calendar"></i>'+cc+' - '+c+'</strong>'+
+
+
+            }
+
+        });
+}
+        
+    });
+</script>
+
+<script type="text/javascript">
+ $(document).ready(function() {
+           $(".taskDelete").click(function(){
+            var id = $(this).attr('name');
+            alert(id);
+            $.ajax({
+               type: 'DELETE',
+               url: '/tododelete/'+id,
+               // data: 'identifer='+id,
+               beforeSend: function (xhr) {
+                    xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
+                },
+               success: function(data){
+                  if(data) {alert("Success!")}
+                    $( "#"+id ).remove();
+
+              }
+      });
+        });
+       });
+
+  
+ 
+
+
+
+</script>
+
+
+
+
+
+
+
+
+
+</body>
+</html>
